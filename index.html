@@ -17,6 +17,7 @@
             --icon-color: #2563eb;
             --pill-bg: #ffffff;
             --hero-gradient: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+            --modal-overlay: rgba(0, 0, 0, 0.5);
         }
         [data-theme="dark"] {
             --bg-color: #111827;
@@ -30,6 +31,7 @@
             --icon-color: #60a5fa;
             --pill-bg: #1f2937;
             --hero-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --modal-overlay: rgba(0, 0, 0, 0.7);
         }
         * {
             margin: 0;
@@ -141,6 +143,7 @@
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s;
+            border: none;
         }
         .btn-primary {
             background-color: var(--primary-blue);
@@ -387,6 +390,98 @@
             font-size: 13px;
             color: var(--text-secondary);
         }
+
+        /* 微信弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-overlay);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .wechat-modal {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 30px 30px 35px;
+            max-width: 360px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+            transform: scale(1);
+            transition: transform 0.2s;
+        }
+        .wechat-modal h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .wechat-modal p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .qrcode-wrapper {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+        .qrcode-wrapper img {
+            width: 200px;
+            height: 200px;
+            display: block;
+        }
+        .wechat-id {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+        .modal-close-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .modal-close-btn:hover {
+            background: var(--primary-blue-hover);
+        }
+        .modal-close-icon {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            line-height: 1;
+            padding: 5px;
+        }
+        .modal-close-icon:hover {
+            color: var(--text-primary);
+        }
+
         @media (max-width: 900px) {
             .grid-4 {
                 grid-template-columns: repeat(2, 1fr);
@@ -427,6 +522,13 @@
             .hero-text h1 {
                 font-size: 28px;
             }
+            .wechat-modal {
+                padding: 25px 20px 30px;
+            }
+            .qrcode-wrapper img {
+                width: 160px;
+                height: 160px;
+            }
         }
     </style>
 </head>
@@ -458,7 +560,8 @@
                 <h1>HTML网页部署服务<br>静态网页快速上线</h1>
                 <p>有现成的 HTML/CSS/JS 代码，不知道怎么部署到公网？把网页文件发我，帮你快速部署，生成可直接访问的公网链接。</p>
                 <div class="hero-buttons">
-                    <a target="_blank" href="https://www.goofish.com/item?spm=a21ybx.personal.feeds.10.e6886ac2JOB5R9&id=1085859790258&categoryId=50023914" class="btn btn-primary">咨询部署</a>
+                    <!-- 咨询部署按钮: 触发弹窗 -->
+                    <a href="javascript:void(0)" class="btn btn-primary" id="consultBtn">咨询部署</a>
                 </div>
             </div>
             <div class="hero-visual">
@@ -616,13 +719,29 @@
                     <h3>具体价格根据网页数量、文件大小和需求定，下单前请先咨询。</h3>
                     <p>仅提供正常合法网页部署服务</p>
                 </div>
-                <a href="https://www.goofish.com/item?spm=a21ybx.personal.feeds.10.e6886ac2JOB5R9&id=1085859790258&categoryId=50023914" target="_blank" class="btn btn-primary">发送文件咨询</a>
+                <!-- 发送文件咨询按钮: 触发弹窗 -->
+                <a href="javascript:void(0)" class="btn btn-primary" id="footerConsultBtn">发送文件咨询</a>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript 用于切换主题 -->
+    <!-- 微信二维码弹窗 -->
+    <div class="modal-overlay" id="wechatModalOverlay">
+        <div class="wechat-modal">
+            <button class="modal-close-icon" id="modalCloseIcon" aria-label="关闭">✕</button>
+            <h3>扫码添加微信</h3>
+            <p>发送网页文件 / 咨询部署服务</p>
+            <div class="qrcode-wrapper">
+                <img src="wx-qrcode.png" alt="微信号:xingzhebenhang">
+            </div>
+            <div class="wechat-id">微信号: xingzhebenhang</div>
+            <button class="modal-close-btn" id="modalCloseBtn">关闭</button>
+        </div>
+    </div>
+
+    <!-- JavaScript 用于切换主题 + 微信弹窗 -->
     <script>
+        // --- 主题切换 ---
         const themeToggle = document.getElementById('themeToggle');
         const htmlElement = document.documentElement;
 
@@ -647,6 +766,47 @@
                 themeToggle.textContent = '🌙 暗色';
             }
         }
+
+        // --- 微信弹窗逻辑 ---
+        const modalOverlay = document.getElementById('wechatModalOverlay');
+        const consultBtn = document.getElementById('consultBtn');
+        const footerConsultBtn = document.getElementById('footerConsultBtn');
+        const modalCloseIcon = document.getElementById('modalCloseIcon');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        // 打开弹窗
+        function openModal(e) {
+            if (e) e.preventDefault();
+            modalOverlay.classList.add('active');
+            // 防止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // 事件绑定
+        consultBtn.addEventListener('click', openModal);
+        footerConsultBtn.addEventListener('click', openModal);
+        modalCloseIcon.addEventListener('click', closeModal);
+        modalCloseBtn.addEventListener('click', closeModal);
+
+        // 点击遮罩层空白处关闭（点击 modal 本身不关闭）
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeModal();
+            }
+        });
+
+        // 按 ESC 键关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                closeModal();
+            }
+        });
     </script>
 </body>
 </html>
